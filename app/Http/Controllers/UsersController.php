@@ -9,6 +9,16 @@ use Auth;
 
 class UsersController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth', [
+            'except' => ['show', 'create', 'store','index']
+        ]);
+
+        $this->middleware('guest',[
+          'only' => ['create']
+        ]);
+    }
     public function create()
     {
         return view('users.create');
@@ -38,11 +48,42 @@ class UsersController extends Controller
       return redirect()->route('users.show',[$user]);
     }
 
-    public function destroy()
+    // public function destroy()
+    // {
+    //   Auth::logout();
+    //   session()->flash('success','You have exited succefully!');
+    //   return redirect('login');
+    // }
+
+    public function index()
     {
-      Auth::logout();
-      session()->flash('success','You have exited succefully!');
-      return redirect('login');
+      $users = User::paginate(10);
+      return view('users.index',compact('users'));
+    }
+
+    public function edit(User $user)
+    {
+      $this->authorize('update',$user);
+      return view('users.edit',compact('user'));
+    }
+
+    public function update(User $user,Request $requset)
+    {
+      $this->validate($requset,[
+        'name'=>'required|max:50',
+        'password'=>'required|confirmed|min:6'
+      ]);
+
+      $this->authorize('update',$user);
+
+      $data=[];
+      $data['name'] = $requset->name;
+      if ($requset->password) {
+        $data['password'] = bcrypt($requset->password);
+      }
+      $user->update($data);
+      session()->flash('success','Update succeeded!');
+      return redirect()->route('users.show',$user->id);
     }
 
 }
