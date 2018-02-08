@@ -25,4 +25,12 @@ class StatusesController extends Controller
       ]);
       return redirect()->back();
     }
+
+    public function destroy(Status $status)
+    {
+      $this->authorize('destroy',$status);
+      $status->delete();
+      session()->flash('success','You delete succesfully!');
+      return redirect()->back();
+    }
 }
